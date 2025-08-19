@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sharester</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="setup-screen" class="container">
+    <div class="initiator box">
+      <h2>Initiator</h2>
+      <p>Your Code:</p>
+      <div id="room-code" class="code-box">----</div>
+      <p>Share this code with your friend.</p>
+      <div id="initiator-status">Waiting for peer...</div>
+    </div>
+
+    <div class="receiver box">
+      <h2>Receiver</h2>
+      <input id="join-input" type="text" placeholder="Enter Code" maxlength="5">
+      <button id="join-btn">Join</button>
+      <div id="receiver-status"></div>
+    </div>
+  </div>
+
+  <div id="interchange-screen" class="hidden">
+    <h2>✅ Connected!</h2>
+    <div class="interchange-area">
+      <div class="file-section">
+        <h3>Send File</h3>
+        <input type="file" id="file-input" multiple>
+        <button id="send-file-btn">Send File(s)</button>
+        <div id="send-progress"></div>
+      </div>
+      
+      <div class="chat-section">
+        <h3>Chat</h3>
+        <div id="chat-messages"></div>
+        <div class="chat-input-area">
+          <input type="text" id="chat-input" placeholder="Type a message...">
+          <button id="send-message-btn">Send</button>
+        </div>
+      </div>
+      
+      <div class="received-files">
+        <h3>Received Files</h3>
+        <div id="received-files-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add required libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
