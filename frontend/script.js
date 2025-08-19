@@ -22,53 +22,50 @@ receiverBox.innerHTML = `
   <button id="joinBtn">Join</button>
 `;
 
-// Simple-Peer instance
 let peer;
 
-// Handle Initiator setup
-socket.emit("create", roomCode);
-peer = new SimplePeer({ initiator: true, trickle: false });
+// --- Initiator Flow ---
+function setupInitiator() {
+  socket.emit("create", roomCode);
 
-// When initiator generates signaling data
-peer.on("signal", (data) => {
-  socket.emit("signal", { room: roomCode, data });
-});
+  peer = new SimplePeer({ initiator: true, trickle: false });
 
-// When initiator receives signaling data
-socket.on("signal", (data) => {
-  peer.signal(data);
-});
-
-// Log when connected
-peer.on("connect", () => {
-  console.log("✅ Peer connected!");
-  document.body.innerHTML = `<h1 style="text-align:center;">Connected! 🎉</h1>`;
-});
-
-// Receiver join button
-document.getElementById("joinBtn").addEventListener("click", () => {
-  const joinCode = document.getElementById("joinCode").value.trim();
-  if (!joinCode) return alert("Please enter a code");
-
-  // Join the room
-  socket.emit("join", joinCode);
-
-  // Receiver peer instance
-  peer = new SimplePeer({ initiator: false, trickle: false });
-
-  // When receiver generates signaling data
   peer.on("signal", (data) => {
-    socket.emit("signal", { room: joinCode, data });
+    socket.emit("signal", { room: roomCode, data });
   });
 
-  // When receiver gets signaling data
   socket.on("signal", (data) => {
     peer.signal(data);
   });
 
-  // Log when connected
   peer.on("connect", () => {
-    console.log("✅ Peer connected!");
+    console.log("✅ Peer connected (Initiator)!");
+    document.body.innerHTML = `<h1 style="text-align:center;">Connected! 🎉</h1>`;
+  });
+}
+
+// --- Receiver Flow ---
+document.getElementById("joinBtn").addEventListener("click", () => {
+  const joinCode = document.getElementById("joinCode").value.trim();
+  if (!joinCode) return alert("Please enter a code");
+
+  socket.emit("join", joinCode);
+
+  peer = new SimplePeer({ initiator: false, trickle: false });
+
+  peer.on("signal", (data) => {
+    socket.emit("signal", { room: joinCode, data });
+  });
+
+  socket.on("signal", (data) => {
+    peer.signal(data);
+  });
+
+  peer.on("connect", () => {
+    console.log("✅ Peer connected (Receiver)!");
     document.body.innerHTML = `<h1 style="text-align:center;">Connected! 🎉</h1>`;
   });
 });
+
+// Start initiator automatically
+setupInitiator();
