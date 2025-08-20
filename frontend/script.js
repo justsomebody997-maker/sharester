@@ -1,32 +1,13 @@
-// Connect to backend (replace with your Render URL)
 const socket = io("https://sharester-backend.onrender.com");
-
-// UI elements
-const initiatorBox = document.querySelector(".initiator");
-const receiverBox = document.querySelector(".receiver");
-
-// Generate random room code for initiator
-const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-
-// Display room code for initiator
-initiatorBox.innerHTML = `
-  <h2>Initiator</h2>
-  <p>Share this code with your partner:</p>
-  <div id="roomCode" style="font-size:20px; font-weight:bold;">${roomCode}</div>
-`;
-
-// Receiver UI
-receiverBox.innerHTML = `
-  <h2>Receiver</h2>
-  <input id="joinCode" type="text" placeholder="Enter code" />
-  <button id="joinBtn">Join</button>
-`;
-
 let peer;
+let roomCode;
 
-// --- Initiator Flow ---
-function setupInitiator() {
-  socket.emit("create", roomCode);
+// ---------------- INITIATOR ----------------
+function createRoom() {
+  roomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+  document.getElementById("room-code").innerText = roomCode;
+
+  socket.emit("create-room", roomCode);
 
   peer = new SimplePeer({ initiator: true, trickle: false });
 
@@ -35,24 +16,27 @@ function setupInitiator() {
   });
 
   socket.on("signal", ({ data }) => {
-    if (peer) {
-      peer.signal(data);
-    }
+    if (peer) peer.signal(data);
   });
 
-
   peer.on("connect", () => {
-    console.log("✅ Peer connected (Initiator)!");
-    document.body.innerHTML = `<h1 style="text-align:center;">Connected! 🎉</h1>`;
+    console.log("✅ Peer connected (initiator)!");
+    document.getElementById("setup-screen").classList.add("hidden");
+    document.getElementById("interchange-screen").classList.remove("hidden");
+  });
+
+  peer.on("data", (data) => {
+    console.log("📩 Message:", data.toString());
+    addMessage("Peer", data.toString());
   });
 }
 
-// --- Receiver Flow ---
-document.getElementById("joinBtn").addEventListener("click", () => {
-  const joinCode = document.getElementById("joinCode").value.trim();
-  if (!joinCode) return alert("Please enter a code");
+// ---------------- RECEIVER ----------------
+document.getElementById("join-btn").addEventListener("click", () => {
+  const joinCode = document.getElementById("join-input").value.trim().toUpperCase();
+  if (!joinCode) return;
 
-  socket.emit("join", joinCode);
+  socket.emit("join-room", joinCode);
 
   peer = new SimplePeer({ initiator: false, trickle: false });
 
@@ -60,15 +44,40 @@ document.getElementById("joinBtn").addEventListener("click", () => {
     socket.emit("signal", { room: joinCode, data });
   });
 
-  socket.on("signal", (data) => {
-    peer.signal(data);
+  socket.on("signal", ({ data }) => {
+    if (peer) peer.signal(data);
   });
 
   peer.on("connect", () => {
-    console.log("✅ Peer connected (Receiver)!");
-    document.body.innerHTML = `<h1 style="text-align:center;">Connected! 🎉</h1>`;
+    console.log("✅ Peer connected (receiver)!");
+    document.getElementById("setup-screen").classList.add("hidden");
+    document.getElementById("interchange-screen").classList.remove("hidden");
+  });
+
+  peer.on("data", (data) => {
+    console.log("📩 Message:", data.toString());
+    addMessage("Peer", data.toString());
   });
 });
 
-// Start initiator automatically
-setupInitiator();
+// ---------------- CHAT ----------------
+document.getElementById("send-message-btn").addEventListener("click", () => {
+  const input = document.getElementById("chat-input");
+  const message = input.value;
+  if (!message) return;
+
+  peer.send(message);
+  addMessage("You", message);
+  input.value = "";
+});
+
+function addMessage(sender, text) {
+  const chat = document.getElementById("chat-messages");
+  const div = document.createElement("div");
+  div.textContent = `${sender}: ${text}`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// ---------------- AUTO CREATE ROOM (Initiator) ----------------
+createRoom();
