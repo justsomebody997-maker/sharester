@@ -6,7 +6,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*", // allow all (we’ll restrict later)
+    origin: "*",
     methods: ["GET", "POST"]
   }
 });
@@ -27,8 +27,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("signal", ({ room, data }) => {
-    socket.to(room).emit("signal", data);
-  });
+  socket.to(room).emit("signal", { data });
+});
+
 
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
