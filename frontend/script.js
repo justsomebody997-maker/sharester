@@ -34,9 +34,12 @@ function setupInitiator() {
     socket.emit("signal", { room: roomCode, data });
   });
 
-  socket.on("signal", (data) => {
-    peer.signal(data);
+  socket.on("signal", ({ data }) => {
+    if (peer) {
+      peer.signal(data);
+    }
   });
+
 
   peer.on("connect", () => {
     console.log("✅ Peer connected (Initiator)!");
