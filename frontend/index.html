@@ -3,54 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sharester</title>
+  <title>Sharester - P2P File Sharing</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="setup-screen" class="container">
     <div class="initiator box">
-      <h2>Initiator</h2>
+      <h2>🚀 Initiator</h2>
       <p>Your Code:</p>
       <div id="room-code" class="code-box">----</div>
       <p>Share this code with your friend.</p>
-      <div id="initiator-status">Waiting for peer...</div>
+      <div id="initiator-status" class="connection-status">Connecting...</div>
     </div>
 
     <div class="receiver box">
-      <h2>Receiver</h2>
-      <input id="join-input" type="text" placeholder="Enter Code" maxlength="5">
-      <button id="join-btn">Join</button>
-      <div id="receiver-status"></div>
+      <h2>📱 Receiver</h2>
+      <input id="join-input" type="text" placeholder="Enter 5-digit Code" maxlength="5">
+      <button id="join-btn">Join Room</button>
+      <div id="receiver-status" class="connection-status"></div>
     </div>
   </div>
 
   <div id="interchange-screen" class="hidden">
-    <h2>✅ Connected!</h2>
+    <header>
+      <h2>✅ Connected to Sharester!</h2>
+      <p>You can now chat and share files securely.</p>
+    </header>
+    
     <div class="interchange-area">
       <div class="file-section">
-        <h3>Send File</h3>
-        <input type="file" id="file-input" multiple>
-        <button id="send-file-btn">Send File(s)</button>
+        <h3>📁 Send Files</h3>
+        <input type="file" id="file-input" multiple accept="*/*">
+        <button id="send-file-btn">Send Selected Files</button>
         <div id="send-progress"></div>
       </div>
       
       <div class="chat-section">
-        <h3>Chat</h3>
+        <h3>💬 Chat</h3>
         <div id="chat-messages"></div>
         <div class="chat-input-area">
-          <input type="text" id="chat-input" placeholder="Type a message...">
+          <input type="text" id="chat-input" placeholder="Type your message..." maxlength="500">
           <button id="send-message-btn">Send</button>
         </div>
       </div>
       
       <div class="received-files">
-        <h3>Received Files</h3>
-        <div id="received-files-list"></div>
+        <h3>📥 Received Files</h3>
+        <div id="received-files-list">
+          <p class="placeholder">No files received yet...</p>
+        </div>
       </div>
     </div>
+    
+    <footer>
+      <p>🔒 Your connection is secure and peer-to-peer. No files are stored on our servers.</p>
+    </footer>
   </div>
 
-  <!-- Add required libraries -->
+  <!-- Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js"></script>
   <script src="script.js"></script>
