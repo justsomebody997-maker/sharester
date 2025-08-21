@@ -35,13 +35,41 @@ socket.on("room-created", (code) => {
 });
 
 socket.on("peer-joined", () => {
-  console.log("Peer joined room");
-  updateStatus(document.getElementById("initiator-status"), "Peer joined! Connecting...", "connecting");
+  console.log("Peer joined room - initiator creating offer");
+  updateStatus(document.getElementById("initiator-status"), "Peer joined! Creating connection...", "connecting");
+  
+  // Initiator creates the peer connection when receiver joins
+  if (!peer || peer.destroyed) {
+    peer = new SimplePeer({ 
+      initiator: true, 
+      trickle: false,
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ]
+      }
+    });
+    setupPeerEvents();
+  }
 });
 
 socket.on("joined-room", (code) => {
   console.log("Successfully joined room:", code);
   updateStatus(document.getElementById("receiver-status"), "Connected! Starting WebRTC...", "connecting");
+  
+  // Receiver creates the peer connection when successfully joined
+  peer = new SimplePeer({ 
+    initiator: false, 
+    trickle: false,
+    config: {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]
+    }
+  });
+  setupPeerEvents();
 });
 
 socket.on("join-error", (error) => {
@@ -51,8 +79,14 @@ socket.on("join-error", (error) => {
 
 socket.on("signal", ({ data }) => {
   if (peer && !peer.destroyed) {
-    console.log("Received signal");
-    peer.signal(data);
+    console.log("Received signal:", data.type);
+    try {
+      peer.signal(data);
+    } catch (error) {
+      console.error("Error processing signal:", error);
+    }
+  } else {
+    console.warn("Received signal but peer not ready");
   }
 });
 
@@ -78,19 +112,7 @@ function createRoom() {
   
   socket.emit("create-room", roomCode);
   
-  // Initialize peer as initiator
-  peer = new SimplePeer({ 
-    initiator: true, 
-    trickle: false,
-    config: {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-      ]
-    }
-  });
-
-  setupPeerEvents();
+  // Don't create peer here - wait for peer-joined event
 }
 
 // ---------------- RECEIVER FUNCTIONS ----------------
@@ -106,20 +128,6 @@ document.getElementById("join-btn").addEventListener("click", () => {
   roomCode = joinCode;
   
   socket.emit("join-room", joinCode);
-  
-  // Initialize peer as receiver
-  peer = new SimplePeer({ 
-    initiator: false, 
-    trickle: false,
-    config: {
-      iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-      ]
-    }
-  });
-
-  setupPeerEvents();
 });
 
 // Allow Enter key to join
@@ -131,13 +139,15 @@ document.getElementById("join-input").addEventListener("keypress", (e) => {
 
 // ---------------- PEER CONNECTION SETUP ----------------
 function setupPeerEvents() {
+  if (!peer) return;
+  
   peer.on("signal", (data) => {
-    console.log("Sending signal");
+    console.log("Sending signal:", data.type);
     socket.emit("signal", { room: roomCode, data });
   });
 
   peer.on("connect", () => {
-    console.log("✅ Peer connected!");
+    console.log("✅ Peer connected successfully!");
     document.getElementById("setup-screen").classList.add("hidden");
     document.getElementById("interchange-screen").classList.remove("hidden");
     
